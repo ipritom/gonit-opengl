@@ -7,3 +7,5 @@ This is an simple mathematical visualization Package for python.
 * Text
 * Opacity Control
 * Shape Controller (Experimental)
+
+### Quick Start Guide
