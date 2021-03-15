@@ -37,7 +37,7 @@ class window:
         self.cPanel.title('Control Panel')
         self.cPanel.geometry("500x500")
     
-    def display(self,draw_objs=None):
+    def display(self,draw_objs=[]):
         self.draw_objs = draw_objs
 
         #creating window and display
