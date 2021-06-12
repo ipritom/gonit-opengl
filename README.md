@@ -9,6 +9,11 @@ This is an simple mathematical visualization Package for python.
 * Shape Controller (Experimental)
 
 ### Quick Start Guide
+#### How to Install:
+Windows Command Prompt
+```
+pip install git+https://github.com/ipritom/gonit-opengl
+```
 Creating Window
 ```
 from gonit import *
