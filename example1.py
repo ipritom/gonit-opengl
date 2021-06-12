@@ -1,14 +1,13 @@
-#setting directory
-import os, sys
-currentdir = os.path.dirname(os.path.realpath(__file__))
-parentdir = os.path.dirname(currentdir)
-sys.path.append(parentdir)
-
 '''
 Drawing Triangle gonit window
 '''
+# import os, sys
+# currentdir = os.path.dirname(os.path.realpath(__file__))
+# parentdir = os.path.dirname(currentdir)
+# sys.path.append(parentdir)
 
-from gonit import *
+from gonit.gonit import *
+
 
 screen = window(700,700,"Example: Triangle")
 

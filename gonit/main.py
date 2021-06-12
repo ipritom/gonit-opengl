@@ -10,8 +10,8 @@ import math
 import time
 import tkinter as tk
 
-from gonit_text import *
-from shader import *
+from .gonit_text import *
+from .shader import *
 
 class window:
     '''

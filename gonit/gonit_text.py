@@ -11,7 +11,7 @@ import numpy as np
 from PIL import Image
 import math
 
-from shader import *
+from .shader import *
 
 class CharacterSlot:
     def __init__(self, texture, glyph):
