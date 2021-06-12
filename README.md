@@ -14,7 +14,7 @@ Windows Command Prompt
 ```
 pip install git+https://github.com/ipritom/gonit-opengl
 ```
-Creating Window
+#### Creating Window
 ```
 from gonit import *
 
@@ -23,7 +23,7 @@ screen.display()
 ```
 This will create a 700x700 black/white screen. The screen will be empty. *Display()* function takes a list of shapes to be drawn on the screen.
 
-Drawing a simple Triangle.
+#### Drawing a simple Triangle.
 
 ```
 from gonit import *
