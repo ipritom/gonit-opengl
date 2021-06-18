@@ -57,5 +57,6 @@ Grid(color=(200, 190, 250), alpha=0.5, res=0.1, line_width=1)
 Axis(color=(200, 190, 250), alpha=1, line_width=1)
 ```
 ## 🛈 Important Information
-* OpenGL coordinate system is by default normalised device coordinator (NDC). That means all the X, Y, or Z components will be between -1 to 1.
-* Current implementation of this package is consistent with 2D drawings. However, Z components also need to be passed (can be set 0). The 3D feature will be implemented in future version.
+* OpenGL coordinate system is by default set to normalised device coordinator (NDC). That means all the X, Y, or Z components will be between -1 to 1.
+  
+* Current implementation of this package is consistent with 2D drawings. However, Z components also need to be passed (can be set to 0). The 3D feature will be implemented in future version.
