@@ -1,50 +1,141 @@
+#OpenGL packages
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GL import shaders
 
+#other packages
 import glfw
 import glm
 import numpy as np
 
+#python packages 
 import math
 import time
 import tkinter as tk
 
+#gonit packages
 from .gonit_text import *
 from .shader import *
+from .structure import *
 
-class window:
+
+def key_input_callback(window, key, scancode, action, mode):
     '''
-    * Create Main diplay Window and a Control Panel Window
-    * Initialize VERTEX_SHADER and FRAGMENT_SHADER
+    Key Input Callback Function to Detect Key Press and
+    follow predefined action.
+    '''
+    if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
+       glfw.terminate()
 
-    Input:
-        height,width,title
+def clear_screen(background):
+    '''
+    This function clear the color buffers and blend the
+    computed fragment color values with the values in 
+    the color buffers.
 
+    Parameters:
+    backgroud : <type : typle> OpenGL background color. 
+    '''
+    R,G,B = background
+    glClearColor(R/255, G/255, B/255, 1)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    glEnable(GL_MULTISAMPLE)
+
+def display_loop():
+    '''
+    Run Display Loop both for Screen and Controller
+    '''
+    raise NotImplementedError
+
+def add_data_buffer(shaderProgram,vertex_array,VBO):
+    '''
+    Add data to buffer
+    '''
+    #using shaderProgram
+    glUseProgram(shaderProgram)
+    #add data to buffer
+    glBindBuffer(GL_ARRAY_BUFFER, VBO)
+    glBufferData(GL_ARRAY_BUFFER, vertex_array.nbytes, vertex_array, GL_STATIC_DRAW)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
+    glEnableVertexAttribArray(0)
+
+
+class Screen(Window,EventListener):
+    '''
+    * Create Main Screen for Display
+    * How Screen Functions:
+    Create Screen -> Display -> Display Settings -> 
+    -> (display loop) -> Clear Screen -> Render
+
+    Attributes
+    -----------
+    height : <type : int>
+    width :  <type : int> 
+    title : <type : str> - window title
+    background : (tupple) - background color (R,G,B):
+    
     For Example:
-    >>> w = window(900,900,'TEST PROGRAM')
+    >>> w = Screen(900,900,'TEST PROGRAM')
     >>> w.display()
     '''
-    def __init__(self,height,width,title,background=(0,0,0)):
-        #main window parameters
-        self.height = height
-        self.width = width
-        self.title = title
-        self.background = background
-
-        #Control Panel window 
-        self.cPanel = tk.Tk()
-        self.cPanel.title('Control Panel')
-        self.cPanel.geometry("500x500")
-    
+    def __init__(self, height, width, title, background=(0,0,0)):
+        super().__init__(height, width, title, background)
+  
     def display(self,draw_objs=[]):
+        '''
+        This Method Create a Display on the Screen
+        
+        It calls display_settings() to initiate a GLFW 
+        window. Then it runs the display loop. 
+        
+        In display loop it runs render() to render 
+        objects on the screen. The display loop also 
+        sense the key_input_callback and 
+        control_listener().
+        '''
         self.draw_objs = draw_objs
+        self.display_settings()
+        
+        #display loop
+        while not glfw.window_should_close(self.window):
+            glfw.poll_events()
+            clear_screen(self.background)
+            #render objects
+            self.render(self.draw_objs)
+            #trace key press
+            glfw.set_key_callback(self.window, key_input_callback)
 
-        #creating window and display
+            try:
+                if self.getListener:
+                    self.listen()
+            except:
+                pass
+            
+        glfw.terminate()
+ 
+    def render(self,draw_objs=None):
+        '''
+        Render Objects to Screen
+ 
+        '''
+        #render objects
+        if draw_objs != None:
+            for obj in draw_objs:
+                obj.draw(self.shaderProgram,self.obj_VBO)
+        
+        glfw.swap_buffers(self.window)
+        #vertical synchronization(vsync) to reduce the load on GPU
+        glfw.swap_interval(1)
+
+
+    def display_settings(self):
+        #setting up screen display 
         glfw.init()
         glfw.window_hint(glfw.SAMPLES,4) #to use MSAA in OpenGL
         glfw.window_hint(glfw.RESIZABLE, True)   
-        self.window = glfw.create_window(self.height, self.width,self.title,None,None)
+        self.window = glfw.create_window(self.height, self.width,self.title,None,None) #glfw window
         glfw.make_context_current(self.window)
         
         #initialize shader programs
@@ -53,161 +144,19 @@ class window:
         
         #creating buffers program
         self.obj_VBO = glGenBuffers(1)
-
         self.text_VAO = glGenVertexArrays(1)
         self.text_VBO = glGenBuffers(1)
 
-        #load Characters for text rendering 
-        for obj in draw_objs:
-            if isinstance(obj,Text):
-                obj.Characters = init_chars(self.text_shaderProgram,
-                                            self.height,
-                                            self.width,
-                                            obj.fontfile,
-                                            obj.font_size,
-                                            )
-        
-        #diplay loop
-        while not glfw.window_should_close(self.window):
-            glfw.poll_events()
-            self.render(self.draw_objs)
-            self.cPanel.update()
-            
-        glfw.terminate()
-    
-    def render(self,draw_objs=None):
-        bg_r,bg_g,bg_b = self.background
-        glClearColor(bg_r/255,bg_g/255,bg_b/255, 1)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glEnable(GL_MULTISAMPLE)
-        
-        #render objects
-        if draw_objs != None:
-            for obj in draw_objs:
-                if isinstance(obj,Text):   
-                    obj.draw(window,self.text_shaderProgram,self.text_VAO,self.text_VBO)
-                else:
-                    obj.draw(self.shaderProgram,self.obj_VBO)
-
-
-        glfw.swap_buffers(self.window)
-        #vertical synchronization(vsync) to reduce the load on GPU
-        glfw.swap_interval(1) 
-
-class Controller:
-    '''
-    Create Controller Window as Child to the Main Window.
-    The Window is Finally Created in Draw method (if control_flag == True)
-    
-    Input:
-        (main_window,draw_object)
-    Output:
-        Controller Window
-    '''
-    def __init__(self,object_name,X,Y,Z,rot_X):
-        self.child = tk.Tk()
-        
-        self.trans_x_scale = tk.Scale(self.child,from_=-1,to=1,
-                                length=200,resolution=0.01,
-                                orient=tk.HORIZONTAL,
-                                label='X Axis')
-        self.trans_y_scale = tk.Scale(self.child,from_=-1,to=1,
-                                  length=200,resolution=0.01,
-                                  orient=tk.HORIZONTAL,
-                                  label='Y Axis')
-        self.trans_z_scale = tk.Scale(self.child,from_=-1,to=1,
-                                  length=200,resolution=0.01,
-                                  orient=tk.HORIZONTAL,
-                                  label='Z Axis')         
-        self.trans_x_scale.set(X)
-        self.trans_y_scale.set(Y)
-        self.trans_z_scale.set(Z)
-
-        self.trans_x_scale.pack()
-        self.trans_y_scale.pack()
-        self.trans_z_scale.pack()
-
-        self.rot_X_scale = tk.Scale(self.child,from_=-360,to=360,
-                            length=200,resolution=0.1,
-                            orient=tk.HORIZONTAL,
-                            label='Angle')
-        self.rot_X_scale.set(rot_X)
-        self.rot_X_scale.pack()
-
-class Shape:
-    def __init__(self,vertex_array,color,alpha=1):
-        #set draw object parameters
-        self.vertex_array = np.array(vertex_array, dtype=np.float32)
-        self.color = color
-        self.alpha = alpha
-
-        #translation parameters
-        self.X = 0
-        self.Y = 0
-        self.Z = 0
-
-        #rotation parameters
-        self.rot_X = 0
-        #control and animation Flag
-        self.control_flag = False
-        self.animation_flag = False
-
-    def add_controller(self,main_window,object_name):
-        '''
-        Create a Controller Window for a specific object
-        '''
-        cPanel = main_window.cPanel
-        self.object_name = object_name
-        self.controller_button = tk.Button(cPanel,text=object_name,command=self.controller_window)
-        self.controller_button.pack()
-
-    def controller_window(self):
-        self.control_flag = True
-        self.controller_button.config(state=tk.DISABLED)
-        self.controller = Controller(self.object_name,self.X,self.Y,self.Z,self.rot_X)
-        self.controller.child.protocol("WM_DELETE_WINDOW",self.on_close)
-        self.controller.child.title('Controller' +' - '+ self.object_name)
-        self.controller.child.geometry("400x400")
-        self.controller.child.update()
-        
-    def controller_scale(self):
-        if self.control_flag == False:
-            return (self.X,self.Y,self.Z,self.rot_X)
-        else:
-            X = self.controller.trans_x_scale.get()
-            Y = self.controller.trans_y_scale.get()
-            Z = self.controller.trans_z_scale.get()
-            rot_X = self.controller.rot_X_scale.get()
-
-            return (X,Y,Z,rot_X)
-
-    def on_close(self):
-        self.controller.child.destroy()
-        self.control_flag = False
-        self.controller_button.config(state=tk.ACTIVE)
-
-    def animation(self,hint,parameters):
-        '''
-        hint : ROTATE, MOVE
-        paramenters: [(x1,y1),(x2,y2)] or [a1,a2]
-        '''
-        pass
-
 
 class Triangle(Shape):
+    def __init__(self,vertex_array,color,fill=True,alpha=1,line_width=1):
+        super().__init__(vertex_array,color,alpha)
+        self.line_width = line_width
+        self.fill = fill
 
     def draw(self, shaderProgram,VBO):
-        glUseProgram(shaderProgram)
-        #creating buffer and add data to buffer
-        
-        glBindBuffer(GL_ARRAY_BUFFER,VBO)
-        glBufferData(GL_ARRAY_BUFFER, self.vertex_array.nbytes, self.vertex_array, GL_STATIC_DRAW)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
-        glEnableVertexAttribArray(0)
-    
+        #add vertex_array to shader
+        add_data_buffer(shaderProgram,self.vertex_array,VBO)
         #accessing ourColor and MVP variable from shaderProgram
         vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor")
         MVPLoc = glGetUniformLocation(shaderProgram, "MVP")
@@ -221,7 +170,7 @@ class Triangle(Shape):
                     self.alpha)
 
         #transform matrix
-        self.X,self.Y,self.Z,self.rot_X = self.controller_scale()
+        #self.X,self.Y,self.Z,self.rot_X = self.controller_scale()
         transform = glm.mat4(1)
         transform = glm.translate(transform, glm.vec3(self.X,
                                                       self.Y,
@@ -229,13 +178,9 @@ class Triangle(Shape):
         transform = glm.rotate(transform, math.radians(self.rot_X),glm.vec3(0,0,1))
         glUniformMatrix4fv(MVPLoc, 1, GL_FALSE, glm.value_ptr(transform))
         
-        glDrawArrays(GL_TRIANGLES, 0, 3)
-
-        glUseProgram(0)
-
-        #UNBIND and DELETE VAO/VBO
-        glBindVertexArray(0)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        
+        self._draw(GT_TRIANGLE,properties={'fill':self.fill,
+                                            'line_width':self.line_width})
        
         
 
@@ -245,13 +190,8 @@ class Line(Shape):
         self.line_width = line_width
 
     def draw(self, shaderProgram,VBO):
-        glUseProgram(shaderProgram)
-        #add data to buffer
-        glBindBuffer(GL_ARRAY_BUFFER, VBO)
-        glBufferData(GL_ARRAY_BUFFER, self.vertex_array.nbytes, self.vertex_array, GL_STATIC_DRAW)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
-        glEnableVertexAttribArray(0)
-    
+        #add vertex_array to shader
+        add_data_buffer(shaderProgram,self.vertex_array,VBO)
         #accessing ourColor and MVP variable from shaderProgram
         vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor")
         MVPLoc = glGetUniformLocation(shaderProgram, "MVP")
@@ -265,7 +205,7 @@ class Line(Shape):
                     self.alpha)
         
         #transform matrix
-        self.X,self.Y,self.Z,self.rot_X = self.controller_scale()
+        # self.X,self.Y,self.Z,self.rot_X = self.controller_scale()
         transform = glm.mat4(1)
         transform = glm.translate(transform, glm.vec3(self.X,
                                                       self.Y,
@@ -273,15 +213,16 @@ class Line(Shape):
         transform = glm.rotate(transform, math.radians(self.rot_X),glm.vec3(0,0,1))
         glUniformMatrix4fv(MVPLoc, 1, GL_FALSE, glm.value_ptr(transform))
 
-        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
-        glLineWidth(self.line_width)
-        glDrawArrays(GL_LINES, 0, 2)
+        #draw process
+        count = len(self.vertex_array)//3
 
-        glUseProgram(0)
+        if count==2:
+            self._draw(GT_LINE,properties={'line_width':self.line_width})
 
-        #UNBIND and DELETE VAO/VBO
-        glBindVertexArray(0)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        else:
+            self._draw(GT_LINES,properties={'line_width':self.line_width,
+                                            'count':count})
+
        
    
         
@@ -305,13 +246,8 @@ class Circle(Shape):
         
     
     def draw(self, shaderProgram,VBO):
-        glUseProgram(shaderProgram)
-        #add data to buffer
-        glBindBuffer(GL_ARRAY_BUFFER, VBO)
-        glBufferData(GL_ARRAY_BUFFER, self.vertex_array.nbytes, self.vertex_array, GL_STATIC_DRAW)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
-        glEnableVertexAttribArray(0)
-    
+        #add vertex_array to shader
+        add_data_buffer(shaderProgram,self.vertex_array,VBO)
         #accessing ourColor and MVP variable from shaderProgram
         vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor")
         MVPLoc = glGetUniformLocation(shaderProgram, "MVP")
@@ -325,7 +261,7 @@ class Circle(Shape):
                     self.alpha)
         
         #transform matrix
-        self.X,self.Y,self.Z,self.rot_X = self.controller_scale()
+        #self.X,self.Y,self.Z,self.rot_X = self.controller_scale()
        
             
         transform = glm.mat4(1)
@@ -334,19 +270,13 @@ class Circle(Shape):
                                                       self.Z))
         transform = glm.rotate(transform, math.radians(self.rot_X),glm.vec3(0,0,1))
         glUniformMatrix4fv(MVPLoc, 1, GL_FALSE, glm.value_ptr(transform))
-
-        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
-        if self.fill:
-            glDrawArrays(GL_TRIANGLE_FAN, 0, int(len(self.vertex_array)/3))
-        else:
-            glLineWidth(self.line_width)
-            glDrawArrays(GL_LINE_LOOP, 0, int(len(self.vertex_array)/3))
         
-        glUseProgram(0)
-
-        #UNBIND and DELETE VAO/VBO
-        glBindVertexArray(0)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        
+        count = len(self.vertex_array)//3
+        self._draw(GT_CIRCLE,properties={'fill':self.fill,
+                                         'line_width':self.line_width,
+                                         'count':count})
+   
 
 class Arrow(Shape):
     def __init__(self,color,alpha=1,point_size=1):
@@ -363,13 +293,8 @@ class Arrow(Shape):
         super().__init__(vertex_array,color,alpha)
 
     def draw(self, shaderProgram,VBO):
-        glUseProgram(shaderProgram)
-        #add data to buffer
-        glBindBuffer(GL_ARRAY_BUFFER, VBO)
-        glBufferData(GL_ARRAY_BUFFER, self.vertex_array.nbytes, self.vertex_array, GL_STATIC_DRAW)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
-        glEnableVertexAttribArray(0)
-    
+        #add vertex_array to shader
+        add_data_buffer(shaderProgram,self.vertex_array,VBO)
         #accessing ourColor and MVP variable from shaderProgram
         vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor")
         MVPLoc = glGetUniformLocation(shaderProgram, "MVP")
@@ -409,13 +334,8 @@ class Points(Shape):
         self.point_size = point_size
     
     def draw(self, shaderProgram,VBO):
-        glUseProgram(shaderProgram)
-        #add data to buffer
-        glBindBuffer(GL_ARRAY_BUFFER, VBO)
-        glBufferData(GL_ARRAY_BUFFER, self.vertex_array.nbytes, self.vertex_array, GL_STATIC_DRAW)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
-        glEnableVertexAttribArray(0)
-    
+        #add vertex_array to shader
+        add_data_buffer(shaderProgram,self.vertex_array,VBO)
         #accessing ourColor and MVP variable from shaderProgram
         vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor")
         MVPLoc = glGetUniformLocation(shaderProgram, "MVP")
@@ -429,21 +349,18 @@ class Points(Shape):
                     self.alpha)
         
         #transform matrix
-        self.X,self.Y,self.Z,self.rot_X = self.controller_scale()
+        #self.X,self.Y,self.Z,self.rot_X = self.controller_scale()
         transform = glm.mat4(1)
         transform = glm.translate(transform, glm.vec3(self.X,
                                                       self.Y,
                                                       self.Z))
         transform = glm.rotate(transform, math.radians(self.rot_X),glm.vec3(0,0,1))
         glUniformMatrix4fv(MVPLoc, 1, GL_FALSE, glm.value_ptr(transform))
-            
-        glPointSize(self.point_size)
-        glDrawArrays(GL_POINTS, 0, int(len(self.vertex_array)/3))
-        glUseProgram(0)
 
-        #UNBIND and DELETE VAO/VBO
-        glBindVertexArray(0)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        count = len(self.vertex_array)//3    
+        self._draw(GT_POINTS,properties={'point_size':self.point_size,
+                                         'count':count})
+        
       
         
 
@@ -481,13 +398,8 @@ class Axis:
         self.alpha = alpha
         
     def draw(self, shaderProgram,VBO):
-        glUseProgram(shaderProgram)
-        #add data to buffer
-        glBindBuffer(GL_ARRAY_BUFFER, VBO)
-        glBufferData(GL_ARRAY_BUFFER, self.vertex_array.nbytes, self.vertex_array, GL_STATIC_DRAW)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
-        glEnableVertexAttribArray(0)
-        
+        #add vertex_array to shader
+        add_data_buffer(shaderProgram,self.vertex_array,VBO)
         #accessing ourColor and MVP variable from shaderProgram
         vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor")
         MVPLoc = glGetUniformLocation(shaderProgram, "MVP")
@@ -516,8 +428,7 @@ class Axis:
         #UNBIND and DELETE VAO/VBO
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
-        
-        
+              
 
 class Grid:
     def __init__(self,color=(200,190,250),alpha=0.5,res=0.1,line_width=1):
@@ -538,13 +449,8 @@ class Grid:
         self.color = color
         
     def draw(self, shaderProgram,VBO):
-        glUseProgram(shaderProgram)
-        #add data to buffer
-        glBindBuffer(GL_ARRAY_BUFFER, VBO)
-        glBufferData(GL_ARRAY_BUFFER, self.vertex_array.nbytes, self.vertex_array, GL_STATIC_DRAW)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
-        glEnableVertexAttribArray(0)
-        
+        #add vertex_array to shader
+        add_data_buffer(shaderProgram,self.vertex_array,VBO)
         #accessing ourColor and MVP variable from shaderProgram
         vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor")
         MVPLoc = glGetUniformLocation(shaderProgram, "MVP")
@@ -569,27 +475,6 @@ class Grid:
         #UNBIND and VAO/VBO
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
+
+
         
-        
-
-if __name__ == '__main__':
-    ###Example Program
-
-    #Triangle vertices 
-    vertex_array = [-0.5, -0.5, 0.0,
-                     0.5, -0.5, 0.0,
-                     0.0, 0.5, 0.0]
-
-    #setting up window
-    w = window(640,640,'example')
-
-    #drawing tirangle and a line
-    t1 = Triangle(vertex_array,(255,0,0),0.5)
-    l1 = Line([0.5,0.5,0,-0.5,-0.5,0],(255,0,0))
-    
-    #controller (experimental)
-    #l1.add_controller(w,'Line1')
-    #t1.add_controller(w,'Triangle 1')
-    
-    #adding shapes to display
-    w.display([Grid(),Axis(),t1,l1])
