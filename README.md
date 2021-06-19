@@ -14,6 +14,9 @@ Windows Command Prompt
 ```
 pip install git+https://github.com/ipritom/gonit-opengl
 ```
+* Should have [Git](https://git-scm.com/) installed on your system.
+* Python Version 3.8
+
 ### Creating Window
 ```python
 from gonit import *
