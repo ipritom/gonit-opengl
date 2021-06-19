@@ -44,16 +44,16 @@ screen.display([t1])
 ```python
 Line(vertex_array, color=(r,g,b), alpha=1, line_width=1))
 ```
-```
+```python
 Circle(color=(r,g,b), fill=False, center=(0, 0, 0), radius=1, line_width=2, alpha=1)
 ```
-```
+```python
 Points(vertex_array, color, alpha=1, point_size=1)
 ```
-```
+```python
 Grid(color=(200, 190, 250), alpha=0.5, res=0.1, line_width=1)
 ```
-```
+```python
 Axis(color=(200, 190, 250), alpha=1, line_width=1)
 ```
 ## 🛈 Important Information
