@@ -7,7 +7,8 @@ This is a simple mathematical visualization package for python.
 alt="IMAGE ALT TEXT HERE" style="display: block;
   margin-left: auto;
   margin-right: auto;
-  width: 10%;" /></a>
+  width: 398px;
+  height:166" /></a>
 
 ## Features
 * Super Easy to Use
