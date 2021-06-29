@@ -1,6 +1,13 @@
 # Gonit
 This is a simple mathematical visualization package for python.
-![image](https://drive.google.com/uc?export=view&id=1Ad_qZYUwAmgHxGMw_JnT8I4efLBb8Nuf)
+
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=YOUTUBE_VIDEO_ID_HERE
+" target="_blank"><img src="https://drive.google.com/uc?export=view&id=1Ad_qZYUwAmgHxGMw_JnT8I4efLBb8Nuf" 
+alt="IMAGE ALT TEXT HERE" style="display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;" /></a>
 
 ## Features
 * Super Easy to Use
