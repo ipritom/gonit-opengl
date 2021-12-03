@@ -8,8 +8,9 @@ import freetype
 import glm
 
 import numpy as np
-from PIL import Image
-import math
+#NOTE: not being used. will be removed
+# from PIL import Image
+# import math
 
 from .shader import *
 
