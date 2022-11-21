@@ -54,6 +54,10 @@ screen.display([t1])
 ```
 ### Other Draw Functionalities
 ```python
+Rectangle(vertex_array,(r,g,b), fill=False)
+```
+
+```python
 Line(vertex_array, color=(r,g,b), alpha=1, line_width=1))
 ```
 ```python
@@ -68,7 +72,26 @@ Grid(color=(200, 190, 250), alpha=0.5, res=0.1, line_width=1)
 ```python
 Axis(color=(200, 190, 250), alpha=1, line_width=1)
 ```
-## 🛈 Important Information
+
+
+
+## Executing Callback Functions (Events)
+Callback functions can be executed when the screen is in display. To do that first we have to activate the listener.
+```
+screen.listener()
+```
+Then we can add one or multiple callback functions by `event()` method.
+
+```
+def animate():
+  pass
+
+screen.listener()
+screen.event(animate)
+```
+See the [example](/exmaples/animation_example.py).
+
+## Important Information
 * OpenGL coordinate system is by default set to normalised device coordinator (NDC). That means all the X, Y, or Z components will be between -1 to 1.
   
 * Current implementation of this package is consistent with 2D drawings. However, Z components also need to be passed (can be set to 0). The 3D feature will be implemented in future version.

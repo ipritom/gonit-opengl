@@ -62,7 +62,7 @@ def add_data_buffer(shaderProgram,vertex_array,VBO):
     glEnableVertexAttribArray(0)
 
 
-class Screen(Window,EventListener):
+class Screen(Window, EventListener):
     '''
     * Create Main Screen for Display
     * How Screen Functions:
@@ -82,6 +82,7 @@ class Screen(Window,EventListener):
     '''
     def __init__(self, height, width, title, background=(0,0,0)):
         super().__init__(height, width, title, background)
+        EventListener.__init__(self)
   
     def display(self,draw_objs=[]):
         '''
@@ -107,11 +108,9 @@ class Screen(Window,EventListener):
             #trace key press
             glfw.set_key_callback(self.window, key_input_callback)
 
-            try:
-                if self.getListener:
-                    self.listen()
-            except:
-                pass
+            # event handling
+            if self.EVENT_FLAG:
+                self.listen()
             
         glfw.terminate()
  
@@ -181,8 +180,41 @@ class Triangle(Shape):
         
         self._draw(GT_TRIANGLE,properties={'fill':self.fill,
                                             'line_width':self.line_width})
-       
+
+
+class Rectangle(Shape):
+    def __init__(self,vertex_array,color,fill=True,alpha=1,line_width=1):
+        super().__init__(vertex_array,color,alpha)
+        self.line_width = line_width
+        self.fill = fill
+
+    def draw(self, shaderProgram,VBO):
+        #add vertex_array to shader
+        add_data_buffer(shaderProgram,self.vertex_array,VBO)
+        #accessing ourColor and MVP variable from shaderProgram
+        vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor")
+        MVPLoc = glGetUniformLocation(shaderProgram, "MVP")
         
+        #changing Color
+        r,g,b = self.color
+        glUniform4f(vertexColorLoc,
+                    r/255.0,
+                    g/255.0,
+                    b/255.0,
+                    self.alpha)
+
+        #transform matrix
+        #self.X,self.Y,self.Z,self.rot_X = self.controller_scale()
+        transform = glm.mat4(1)
+        transform = glm.translate(transform, glm.vec3(self.X,
+                                                      self.Y,
+                                                      self.Z))
+        transform = glm.rotate(transform, math.radians(self.rot_X),glm.vec3(0,0,1))
+        glUniformMatrix4fv(MVPLoc, 1, GL_FALSE, glm.value_ptr(transform))
+        
+        
+        self._draw(GT_RECT, properties={'fill':self.fill,
+                                            'line_width':self.line_width})
 
 class Line(Shape):
     def __init__(self,vertex_array,color,alpha=1,line_width=1):

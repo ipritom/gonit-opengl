@@ -11,14 +11,12 @@ GT_LINES = 'GT_LINES'
 GT_TRIANGLE= 'GT_TRIANGLE'
 GT_CIRCLE = 'GT_CIRCLE' 
 GT_POINTS = 'GT_POINTS'
+GT_RECT = "GT_RECT"
 
-#GT_HINTS for event process
-GT_CONTROL = 'GT_CONTROL'
-GT_CONTROLLER = 'GT_CONTROLLER'
 
 class Window:
     '''
-    * Window Class for Creating Window Objects
+    Window Class for Creating Window Objects
 
     Attributes
     -----------
@@ -98,6 +96,11 @@ class Shape:
             glPointSize(properties['point_size'])
             glDrawArrays(GL_POINTS, 0, properties['count'])
 
+        elif gtHint == GT_RECT:
+            if properties['fill'] == True:
+                glDrawArrays(GL_TRIANGLE_FAN, 0, 4)
+            else:
+                glDrawArrays(GL_LINE_LOOP, 0, 4)
         #shader reset, UNBIND and DELETE VAO/VBO
         glUseProgram(0),
         glBindVertexArray(0)
@@ -106,7 +109,7 @@ class Shape:
 
 class EventListener:
     '''
-    * Interface between Screen and User Defined Function.
+    Interface between Screen and User Defined Function.
 
     This class handles event function that is given to
     screen object. It basically runs the given fucntion
@@ -120,24 +123,32 @@ class EventListener:
     eventProcess() method.
 
     For Example: 
-    >>>screen = Screen(700,700,'Test Program')
-    >>>screen.listener(GT_CONTROL)
+    >>> screen = Screen(700,700,'Test Program')
+    >>> screen.listener() # to set the EVENT_FLAG = True
     '''
     def __init__(self):
-        pass
+        self.EVENT_FLAG = False
 
     def listen(self):
-        if self.flag=='GT_CONTROL':
-            self.eventProcess(self.func)
+        if self.events == []:
+            self.EVENT_FLAG = False # to stop listening from Display loop
+            print("Warning : No Event Function passed.")
+        else:
+            if self.EVENT_FLAG==True:
+                for func in self.events:
+                    self.eventProcess(func)
 
-    def listener(self,flag=None):
-        self.flag = flag
-        self.getListener = True
+    def listener(self):
+        self.events = []
+        self.EVENT_FLAG = True
 
     def event(self,func):
-        self.func = func
+        # event will handle more than one function passed by user
+        self.events.append(func)
+
     def eventProcess(self,func):
         func()
+
 
 
 class Communicator:
