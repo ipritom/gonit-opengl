@@ -10,7 +10,7 @@ if os.path.isfile(requirementPath):
 
 
 setup(name='gonit',
-version='0.2',
+version='0.3',
 description='This is an simple mathematical visualization Package for python',
 url='https://github.com/ipritom/gonit-opengl',
 author='ipritom',
